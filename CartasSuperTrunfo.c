@@ -10,11 +10,12 @@
 #define NUM_STATES 8
 #define NUM_CITIES 4
 #define NUM_COUNTRIES 5
+#define NUM_LANDMARKS 3
 
 // Defining structures
 typedef struct {
     char city[50];
-    int id;
+    char id[4];
     int population;
     int area;
     int GDP;
@@ -26,7 +27,7 @@ typedef struct {
 typedef struct {
     char state[50];
     int countryId;
-    int id;
+    char id;
     Card cities[NUM_CITIES];
 } State;
 
@@ -38,6 +39,8 @@ typedef struct {
 
 // Create a state
 void createState(Country deck[], int countryId, int *numStates) {
+    int numCities = 0;
+    char *stateIds[8] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'};
     int countryIndex = -1;
     for (int i = 0; i < NUM_COUNTRIES; i++) {
         if (deck[i].id == countryId) {
@@ -63,14 +66,14 @@ void createState(Country deck[], int countryId, int *numStates) {
     for (int i = 0; i < *numStates; i++) {
         if (strcmp(deck[countryIndex].states[i].state, name) == 0) {
             printf("O estado %s já está cadastrado neste país!\n", name);
-                        for (int j = 0; j < NUM_STATES; j++) {
-                if (deck[i].states[j].cities == 0) {
+                        for (int j = 0; j < NUM_CITIES; j++) {
+                if (deck[countryIndex].states[i].cities[j].id == 0) {
                     char answer;
-                    printf("Este país não tem todos os estados cadastrados. Cadastrar um novo estado? (s/n): ");
+                    printf("Este estado não tem todas as cidades cadastradas. Cadastrar uma nova cidade? (s/n): ");
                     scanf(" %c", &answer);
 
                     if (answer == 's') {
-                        createState(deck, countryId, &numStates);
+                        //------------------------------------------->createCard(deck, countryId, &numCities); //<--------- create card here
                     } else {
                         return;
                     }
@@ -82,27 +85,88 @@ void createState(Country deck[], int countryId, int *numStates) {
 
     State newState;
     strcpy(newState.state, name);
-    newState.id = *numStates + 1;
+    newState.id = stateIds[1];
     newState.countryId = countryId;
 
     for (int i = 0; i < NUM_CITIES; i++) {
-        newState.cities[i].id = 0;
-        newState.cities[i].city[0] = '\0';
+        newState.cities[i].id;
+        newState.cities[i].population = 0;
+        newState.cities[i].area = 0;
+        newState.cities[i].GDP = 0;
+        newState.cities[i].popDensity = 0;
+        newState.cities[i].GDPPerCapita = 0;
+        newState.cities[i].landmarks[0] = '\0';
     }
 
     deck[countryIndex].states[*numStates] = newState;
     (*numStates)++;
 
-    printf("O estado %s foi criado com sucesso!\n", newState.state);
+    printf("O estado %s foi criado com sucesso!\n Vamos dar início a criação da cidade?", newState.state);
+    createCard(deck,countryIndex, newState.id, &numCities);
 }
 
 // Create a card
-void createCard(int countryId, int stateId) { // 1-4
-    printf("Criando cidade para o país %d e estado %d...\n", countryId, stateId);
+void createCard(Country deck[], int countryIndex, char stateId, int *numCities) { // 1-4
+    int numStates = 0;
+    int stateIndex = -1;
 
-        // Compute values correctly
-    // c->popDensity = (area > 0) ? (double)population / area : 0;
-    // c->GDPPerCapita = (population > 0) ? (double)GDP / population : 0;
+    for (int i = 0; i < NUM_COUNTRIES; i++) {
+        if (deck[countryIndex].states[i].id == stateId) {
+            stateIndex = i;
+            break;
+        }
+    }
+
+    if (stateIndex == -1) {
+        printf("País com ID %d não encontrado!\n", stateId);
+        return;
+    }
+
+
+    if (*numCities >= NUM_CITIES) {
+        printf("O limite de cidades foi atingido para este estado!\n");
+        return;
+    }
+    char name[50];
+    printf("Insira o nome da cidade: ");
+    scanf(" %49[^\n]", name);
+
+    for (int i = 0; i <= *numCities; i++) {
+        if (strcmp(deck[countryIndex].states[stateIndex].cities[i].city, name) == 0) {
+            printf("A cidade %s já está cadastrada neste estado!\n", name);
+            return;
+        }
+    }
+    int population, area, gdp;
+    char landmark1[50], landmark2[50], landmark3[50];
+
+    printf("Insira o tamanho da população da cidade: ");
+    scanf(" %d", &population);
+    printf("Insira a área da cidade: ");
+    scanf(" %f", &area);
+    printf("Insira o PIB da cidade: ");
+    scanf(" %f", &gdp);
+    printf("Insira o nome de três pontos turísticos da cidade separadamente: ");
+    scanf(" %49[^\n]", &landmark1);
+    scanf(" %49[^\n]", &landmark2);
+    scanf(" %49[^\n]", &landmark3);
+
+    Card newCity;
+    strcpy(newCity.city, name);
+    sprintf(newCity.id, numCities, stateId);
+    newCity.population = population;
+    newCity.area = area;
+    newCity.GDP = gdp;
+    snprintf(newCity.landmarks, sizeof(newCity.landmarks), "%s, %s, %s", landmark1, landmark2, landmark3);
+    newCity.popDensity =  (newCity.area > 0) ? (double)newCity.population / newCity.area : 0;
+    newCity.GDPPerCapita = (newCity.population > 0) ? (double)newCity.GDP / newCity.population : 0;
+
+
+    deck[countryIndex].states[stateIndex].cities[*numCities] = newCity;
+    (*numCities)++;
+
+    printf("%s foi criada com sucesso!\n Confira a carta criada:", newCity.city);
+    printCard(deck, countryIndex, stateIndex, *numCities);
 }
 
 // Create a country
@@ -159,20 +223,29 @@ void createCountry(Country deck[], int *numCountries) {
     createState(deck, newCountry.id, &numStates);
 }
 
+void printCard (Country deck[], int countryIndex, int stateIndex, int cityIndex){
+        printf("País: %c \n Estado: %c \n Cidade: %c \n População: %d habitantes \n Área: %f m² \n PIB: %f moeda local \n Densidade populacional: %f \n PIB per capita: %f moeda local \n Pontos Turísticos: \n - %c \n - %c \n - %c \n", deck[countryIndex].country, deck[countryIndex].states[stateIndex].state, 
+    deck[countryIndex].states[stateIndex].cities[cityIndex].city, deck[countryIndex].states[stateIndex].cities[cityIndex].population, 
+    deck[countryIndex].states[stateIndex].cities[cityIndex].area, deck[countryIndex].states[stateIndex].cities[cityIndex].GDP, 
+    deck[countryIndex].states[stateIndex].cities[cityIndex].popDensity, deck[countryIndex].states[stateIndex].cities[cityIndex].GDPPerCapita, 
+    deck[countryIndex].states[stateIndex].cities[cityIndex].landmarks[0], deck[countryIndex].states[stateIndex].cities[cityIndex].landmarks[1],
+    deck[countryIndex].states[stateIndex].cities[cityIndex].landmarks[2]);
+    return;
+}
+
 int main() {
     Country deck[NUM_COUNTRIES] = {0};
     int numCountries = 0;
-    int numCities = 0;
 
     // Cadastro das Cartas:
     // Sugestão: Utilize a função scanf para capturar as entradas do usuário para cada atributo.
     // Solicite ao usuário que insira as informações de cada cidade, como o código, nome, população, área, etc.
 
-    printf("Seja bem-vindo ao Super Trunfo: Países!\n");
+    printf("Seja bem-vindo ao Super Trunfo Países!\n");
 
 
     //============================== instructions ==================================
-    printf("escrever as instruções aqui");
+    printf("escrever as instruções aqui\n");
     //====================================================================================
 
     
