@@ -160,11 +160,13 @@ void menu(Card deck[], int *numCards)
         break;
     case 3:
         // End game
+        {
         char saida;
         printf("Já vai? Digite s para sim e n para não.");
-        scanf("%c", &saida);
+        scanf(" %49[^\n]", &saida);
         (saida == 'n' || saida == 'N') ? playGame(deck, numCards) : printf("Foi bom te ter por aqui! Volte logo!");
         break;
+        }
     default:
         printf("Opção inválida, tente novamente.\n");
         menu(deck, numCards);
